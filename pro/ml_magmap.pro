@@ -102,7 +102,8 @@ function ml_magmap, kappa, gamma, fstar, nxpix=nxpix, nypix=nypix, xrange=xr, $
 
 ; -------- shoot the rays in the image plane (calculate deflection
 ;          angle at each point)
-  common counters, cellcnt=cellcnt, starcnt=starcnt
+;  common counters, cellcnt=cellcnt, starcnt=starcnt
+  common counters, cellcnt, starcnt
   cellcnt = 0L
   starcnt = 0L
 
@@ -133,8 +134,8 @@ function ml_magmap, kappa, gamma, fstar, nxpix=nxpix, nypix=nypix, xrange=xr, $
   print, "numy land = ", nbar
   print, "xmin, dx = ", xmin, dx
   print, "ymin, dy = ", ymin, dy
-  print, "mean, std defx", mean(defarr[*,*,0]), stdev(defarr[*,*,0])
-  print, "mean, std defy", mean(defarr[*,*,1]), stdev(defarr[*,*,1])
+;  print, "mean, std defx", mean(defarr[*,*,0]), stdev(defarr[*,*,0])
+;  print, "mean, std defy", mean(defarr[*,*,1]), stdev(defarr[*,*,1])
 
   if nw EQ 0 then message, 'NO RAYS DEFLECTED INTO SOURCE PLANE GRID!!!'
 

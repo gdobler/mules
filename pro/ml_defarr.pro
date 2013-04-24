@@ -53,8 +53,11 @@ pro ml_defarr, defarr, xr, yr, nx, ny, cells, stars, scheme=scheme, bin=bin
   if scheme EQ 2 then begin
      if n_elements(bin) EQ 0 then bin = 64L
 
-     ncx = (nx-1)/bin
-     ncy = (ny-1)/bin
+     ncx   = (nx-1)/bin
+     ncy   = (ny-1)/bin
+     bp1   = bin + 1
+     xfrac = (dindgen(bp1*bp1) mod bp1) / double(bin)
+     yfrac = (dindgen(bp1*bp1) / bp1) / double(bin)
 
      for icx=0L, ncx-1 do begin
         splog, 'icx = ', icx, ' out of ', ncx, form='(A,I5,A,I5)'
@@ -105,13 +108,21 @@ pro ml_defarr, defarr, xr, yr, nx, ny, cells, stars, scheme=scheme, bin=bin
            defx  = [[defll[0],deflr[0]], [deful[0],defur[0]]]
            defy  = [[defll[1],deflr[1]], [deful[1],defur[1]]]
 
-           defxint = interpolate(defx, dindgen(bin+1)/double(bin), $
-                                 dindgen(bin+1)/double(bin), /grid)
-           defyint = interpolate(defy, dindgen(bin+1)/double(bin), $
-                                 dindgen(bin+1)/double(bin), /grid)
+;           defxint = interpolate(defx, dindgen(bin+1)/double(bin), $
+;                                 dindgen(bin+1)/double(bin), /grid)
+;           defyint = interpolate(defy, dindgen(bin+1)/double(bin), $
+;                                 dindgen(bin+1)/double(bin), /grid)
 
-           defarr[iximgll:iximgur,iyimgll:iyimgur,0] = defxint
-           defarr[iximgll:iximgur,iyimgll:iyimgur,1] = defyint
+           defxint = defll[0]*(1.0-xfrac)* $
+                     (1.0-yfrac) + deflr[0]*xfrac*(1.0-yfrac)+ $
+                     deful[0]*(1.0-xfrac)*yfrac + defur[0]*xfrac*yfrac
+           defyint = defll[1]*(1.0-xfrac)* $
+                     (1.0-yfrac) + deflr[1]*xfrac*(1.0-yfrac)+ $
+                     deful[1]*(1.0-xfrac)*yfrac + defur[1]*xfrac*yfrac
+
+
+           defarr[iximgll:iximgur,iyimgll:iyimgur,0] = reform(defxint,bp1,bp1)
+           defarr[iximgll:iximgur,iyimgll:iyimgur,1] = reform(defyint,bp1,bp1)
         endfor
      endfor
 

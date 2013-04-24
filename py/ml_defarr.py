@@ -37,8 +37,8 @@ def ml_defarr(defarr, xr, yr, nx, ny, cells, stars, scheme=None, bin=None):
         bp1    = bin + 1                  #
         xind   = np.arange(bp1*bp1) % bp1 #
         yind   = np.arange(bp1*bp1) / bp1 # utilities to be used 
-        xfrac  = xind/float(bp1)          # for the interpolation
-        yfrac  = yind/float(bp1)          #
+        xfrac  = xind/float(bin)          # for the interpolation
+        yfrac  = yind/float(bin)          #
         ncx    = (nx-1)/bin
         ncy    = (ny-1)/bin
         x0, x1 = xr
