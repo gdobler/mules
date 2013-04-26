@@ -120,68 +120,28 @@ def ml_defarr(defarr, xr, yr, nx, ny, cells, stars, scheme=None, bins=None):
         cnx    = nx/bins
         cny    = ny/bins
         coarse = np.zeros([cnx,cny,2])
+        xcoar  = np.linspace(xr[0],xr[1],num=cnx,endpoint=False)
+        ycoar  = np.linspace(yr[0],yr[1],num=cny,endpoint=False)
 
         for iximg in range(cnx):
             print 'ML_DEFARR:   iximg = {0} out of {1}\r'.format(iximg+1,cnx), 
             sys.stdout.flush()
 
             for iyimg in range(cny):
-                ximg = xr[0] + (xr[1]-xr[0])*float(iximg)/float(cnx)
-                yimg = yr[0] + (yr[1]-yr[0])*float(iyimg)/float(cny)
-
-                coarse[iximg,iyimg,:] = ml_defang(ximg,yimg,cells,stars,None)
+                coarse[iximg,iyimg,:] = ml_defang(xcoar[iximg],ycoar[iyimg], 
+                                                  cells,stars,None)
         print
 
 
         # -------- interpolate from the coarse grid onto the real grid
-#        xc, yc = np.meshgrid(np.linspace(xr[0],xr[1],cnx), \
-#                             np.linspace(yr[0],yr[1],cny))
-#        xc, yc = xc.T, yc.T
+        ximg = np.linspace(xr[0],xr[1],num=nx,endpoint=False)
+        yimg = np.linspace(yr[0],yr[1],num=ny,endpoint=False)
 
-        xc,yc = np.mgrid[xr[0]:xr[1]:complex(0,cnx),yr[0]:yr[1]:complex(0,cny)]
-
-        #print cnx
-        #print cny
-        #print xc.dtype
-        #print yc.dtype
-        #print (coarse[:,:,0]).dtype
-
-        ximg = np.arange(xr[0],xr[1],(xr[1]-xr[0])/float(nx))
-        yimg = np.arange(yr[0],yr[1],(yr[1]-yr[0])/float(ny))
-
-        def func(x,y):
-#            return (x+y)*np.exp(-5.0*(x**2 + y**2))
-            return (x+y)*np.exp(-(x**2 + y**2)/(2*10.**2))
-
-        x,y = np.mgrid[-45:45:10j, -18:18:10j]
-        fvals = func(x,y)
-
-        #print ximg.shape, yimg.shape, defarr.shape
-        foo = coarse[:,:,0]
-
-        print(fvals.shape)
-        print(foo.shape)
-        print
-        print fvals
-        print
-        print foo
-        import matplotlib.pyplot as plt
-        plt.imshow(foo,interpolation='none')
-        plt.imshow(fvals,interpolation='none')
-        
-        newfunc = interpolate.interp2d(x,y,fvals,kind='linear')
-        print 'checkpoint 0'
-
-#        defxint = interpolate.interp2d(xc,yc,foo,kind='cubic')
-        defxint = interpolate.interp2d(xc,yc,fvals,kind='cubic')
-        print 'checkpoint 1'
-        defyint = interpolate.interp2d(xc,yc,coarse[:,:,1],kind='cubic')
-        print 'checkpoint 2'
+        defxint = interpolate.RectBivariateSpline(xcoar,ycoar,coarse[:,:,0])
+        defyint = interpolate.RectBivariateSpline(xcoar,ycoar,coarse[:,:,1])
 
         defarr[:,:,0] = defxint(ximg,yimg)
-        print 'checkpoint 3'
         defarr[:,:,1] = defyint(ximg,yimg)
-        print 'checkpoint 4'
 
         return
 
