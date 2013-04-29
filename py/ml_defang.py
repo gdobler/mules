@@ -31,7 +31,7 @@ def ml_defang(ximg, yimg, cells, stars, cellnum):
     dely   = yimg - cells[cellnum].ycell
     rcell  = np.sqrt(delx*delx + dely*dely)
 
-    if rcell<1.0e-5: return breakup_cell(cellnum)
+    if (rcell<1.0e-5) and ~cells[cellnum].high: return breakup_cell(cellnum)
 
     tcell  = np.arctan2(dely,delx)
     mcell  = cells[cellnum].mcell
