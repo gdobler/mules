@@ -70,6 +70,8 @@ class magmap():
         cells  = gencells(stars)
         nstars = np.array([i.nstar for i in cells])
 
+        counters.maxnst = max(nstars[np.array([i.high for i in cells])==1])
+
         print "ML_MAGMAP: Mean number of stars per highest cell: ", \
             np.mean(nstars[np.array([i.high for i in cells])==1])
 
@@ -137,3 +139,37 @@ class magmap():
         self.cells     = cells
         self.defarr    = defarr
         self.magarr    = magarr
+
+
+
+    # -------- convolve the magnification map with a source morphology
+#    def convmap(self, type=None):
+
+# type 1 is a Gaussian
+#
+# set the source size
+#
+# determine the units of the source size in pixels (compared to Rein).
+# this is going to involve ratios of number of pixels.
+#
+# set a minimum number of pixels for the convolution.  for example
+# problems could arise in which the source size is like 0.1, but
+# magarr is only sampled at 1 Rein...  what to do in that case?
+#
+# do the convolution
+#
+# what to do if we don't want a Gaussian?
+#
+# uniform source is possible
+#
+# random little clouds
+#
+# passing a convolution kernel should be allowed
+#
+# we should store the postage same of the convolution kernel
+#
+# we should also store some parameters for the convolution kernel.
+# what should those be?  rsrc is an obvious one, but what else?
+#
+# need some support functions to go from Rein to physical
+# size/wavelength

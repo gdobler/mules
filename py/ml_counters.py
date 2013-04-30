@@ -9,6 +9,7 @@ class counters():
 
     cellcnt = 0
     starcnt = 0
+    maxnst  = 0
     clist   = []
     mmrange = np.arange(100)
     glones  = np.ones(100000)
