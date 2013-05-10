@@ -1,112 +1,113 @@
 from scipy import interpolate
 from ml_defang_iter import *
+from ml_defang import *
 import sys
 import multiprocessing
 
-def ml_defarr(defarr, xr, yr, nx, ny, cells, stars, scheme=None, bins=None):
+def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=None,
+              bins=None):
 
     # -------- defaults
-    scheme = 1 if scheme==None else scheme
+    multi    = True if multi==None else multi
+    recur    = True if recur==None else recur
+    bins     = 0    if bins==None  else bins
+    def_func = ml_defang if recur else ml_defang_iter
 
 
+    # -------- utilities
+    xmin, xmax, xmid = xr[0], xr[1], 0.5*(xr[0]+xr[1])
+    ymin, ymax, ymid = yr[0], yr[1], 0.5*(yr[0]+yr[1])
 
-    # -------- scheme 1: loop directly
-    if scheme==1:
-        print "ML_DEFARR: looping directly through 2D image plane..."
-
-        for iximg in range(nx):
-            print 'ML_DEFARR:   iximg = {0} out of {1}\r'.format(iximg+1,nx), 
-            sys.stdout.flush()
-
-            for iyimg in range(ny):
-                ximg = xr[0] + (xr[1]-xr[0])*float(iximg)/float(nx)
-                yimg = yr[0] + (yr[1]-yr[0])*float(iyimg)/float(ny)
-
-                defarr[iximg,iyimg,:] = ml_defang_iter(ximg,yimg,cells,stars,None)
-
-        print
-        return
+    xrul, yrul = [xmin,xmid], [ymid,ymax]
+    xrur, yrur = [xmid,xmax], [ymid,ymax]
+    xrll, yrll = [xmin,xmid], [ymin,ymid]
+    xrlr, yrlr = [xmid,xmax], [ymin,ymid]
 
 
-    # -------- scheme 1: loop directly (threaded)
-    elif scheme==-1:
-        print "ML_DEFARR: looping directly through 2D image plane..."
+    # -------- loop through the image plane
+    def run_rect(conn,xr,yr,nx,ny,cells,stars,verbose=False):
+        rect = np.zeros([nx,ny,2], dtype=np.float64)
+        ximg = np.linspace(xr[0],xr[1],nx,endpoint=False)
+        yimg = np.linspace(yr[0],yr[1],ny,endpoint=False)
 
-        # -------- dummy function to thread
-        def run_quadrant(conn,xr,yr,nx,ny,cells,stars,verbose=False):
-            quad = np.zeros([nx,ny,2], dtype=np.float64)
-            ximg = np.linspace(xr[0],xr[1],nx,endpoint=False)
-            yimg = np.linspace(yr[0],yr[1],ny,endpoint=False)
+        for i in range(nx):
+            if verbose:
+                print(('ML_DEFARR:     iximg = {0} out ' + 
+                       'of {1}\r').format(i+1, nx)), 
+                sys.stdout.flush()
 
-            for i in range(nx):
-                if verbose:
-                    print(('ML_DEFARR:   iximg = {0} out ' + 
-                           'of {1}\r').format(i+1, nx)), 
-                    sys.stdout.flush()
+            for j in range(ny):
+                rect[i,j,:] = def_func(ximg[i],yimg[j],cells,stars,None)
 
-                for j in range(ny):
-                    quad[i,j,:] = ml_defang_iter(ximg[i],yimg[j],cells,stars,
-                                                 None)
-
-            if verbose: print
-            conn.send(quad)
+        if verbose: print
+        if multi:
+            conn.send(rect)
             conn.close()
+        else:
+            return rect
 
-        # -------- define the ranges and dummy maps
-        xmin, xmax, xmid = xr[0], xr[1], 0.5*(xr[0]+xr[1])
-        ymin, ymax, ymid = yr[0], yr[1], 0.5*(yr[0]+yr[1])
 
-        xrul, yrul = [xmin,xmid], [ymid,ymax]
-        xrur, yrur = [xmid,xmax], [ymid,ymax]
-        xrll, yrll = [xmin,xmid], [ymin,ymid]
-        xrlr, yrlr = [xmid,xmax], [ymin,ymid]
+    # -------- announce the method
+    print("ML_DEFARR: looping through the 2D image plane with:")
+    print("ML_DEFARR:   multiprocessing      : " + ("ON" if multi  else "OFF"))
+    print("ML_DEFARR:   recursion            : " + ("ON" if recur  else "OFF"))
+    print("ML_DEFARR:   subgrid inerpolation : " + ("ON" if bins>0 else "OFF"))
 
-        # -------- initialize results queue
+
+    # -------- calculate the deflection angle
+    if multi:
+        # -------- initialize the deflection array
+        defarr = np.zeros([nx,ny,2], dtype=np.float64)
+
+        # -------- initialize results pipes
         parent_conn1, child_conn1 = multiprocessing.Pipe()
         parent_conn2, child_conn2 = multiprocessing.Pipe()
         parent_conn3, child_conn3 = multiprocessing.Pipe()
         parent_conn4, child_conn4 = multiprocessing.Pipe()
 
-        # -------- initialize the threads (only print for first quadrant)
-        threadul = multiprocessing.Process(target=run_quadrant, 
+        # -------- initialize the processes (only print for first quadrant)
+        threadul = multiprocessing.Process(target=run_rect, 
                                    args=(child_conn1,xrul,yrul,nx/2l,ny/2l, 
                                          cells,stars), 
                                    kwargs={'verbose':True})
-        threadur = multiprocessing.Process(target=run_quadrant, 
+        threadur = multiprocessing.Process(target=run_rect, 
                                    args=(child_conn2,xrur,yrur,nx/2l,ny/2l,
                                          cells,stars))
-        threadll = multiprocessing.Process(target=run_quadrant, 
+        threadll = multiprocessing.Process(target=run_rect, 
                                    args=(child_conn3,xrll,yrll,nx/2l,ny/2l,
                                          cells,stars))
-        threadlr = multiprocessing.Process(target=run_quadrant, 
+        threadlr = multiprocessing.Process(target=run_rect, 
                                    args=(child_conn4,xrlr,yrlr,nx/2l,ny/2l,
                                          cells,stars))
 
-        # -------- run the threads
-        print "ML_DEFARR: running 4 threads..."
+        # -------- run the processes
+        print "ML_DEFARR:   running 4 processes..."
         threadul.start()
         threadur.start()
         threadll.start()
         threadlr.start()
 
-        # -------- put the threads into the defarr
+        # -------- put quadrant results into the defarr
         defarr[0:nx/2,  ny/2:ny, :] = parent_conn1.recv()
         defarr[nx/2:nx, ny/2:ny, :] = parent_conn2.recv()
         defarr[0:nx/2,  0:ny/2,  :] = parent_conn3.recv()
         defarr[nx/2:nx, 0:ny/2,  :] = parent_conn4.recv()
 
-        # -------- allow threads to complete
+        # -------- allow processes to complete and rejoin
         threadul.join()
-        print "ML_DEFARR: upper left  thread has joined..."
+        print "ML_DEFARR:   upper left  thread has joined..."
         threadur.join()
-        print "ML_DEFARR: upper right thread has joined..."
+        print "ML_DEFARR:   upper right thread has joined..."
         threadll.join()
-        print "ML_DEFARR: lower left  thread has joined..."
+        print "ML_DEFARR:   lower left  thread has joined..."
         threadlr.join()
-        print "ML_DEFARR: lower right thread has joined..."
+        print "ML_DEFARR:   lower right thread has joined..."
+    else:
+        defarr = run_rect(-314,xr,yr,nx,ny,cells,stars,verbose=True)
 
-        return
+    return defarr
 
+"""
 # -------- linearly interpolate in fixed cells
     elif scheme==2:
 
@@ -229,3 +230,4 @@ def ml_defarr(defarr, xr, yr, nx, ny, cells, stars, scheme=None, bins=None):
     else:
         print "ML_DEFARR: ONLY SCHEMES #1, 2, and 3 ARE IMPLEMENTED!!!"
         return
+"""
