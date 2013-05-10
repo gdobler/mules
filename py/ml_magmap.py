@@ -87,6 +87,11 @@ class magmap():
         defarr = ml_defarr(xrimg, yrimg, nximg, nyimg, cells, stars, \
                            multi=multi, recur=recur, bins=bins)
 
+        if (len(defarr)==1) and (defarr==-1):
+            print("ML_MAGMAP: ERROR: # of processors (multi kw) ")
+            print("ML_MAGMAP:   inappropriately set... aborting.")
+            return
+
         print "ML_MAGMAP: Total number of cells used: ", counters.cellcnt
         print "ML_MAGMAP: Total number of stars used: ", counters.starcnt
 
