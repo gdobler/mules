@@ -1,15 +1,16 @@
 from scipy import interpolate
-from ml_defang import *
+from ml_defang_iter import *
 import sys
+import multiprocessing
 
 def ml_defarr(defarr, xr, yr, nx, ny, cells, stars, scheme=None, bins=None):
 
-# -------- defaults
+    # -------- defaults
     scheme = 1 if scheme==None else scheme
 
 
 
-# -------- scheme 1: loop directly
+    # -------- scheme 1: loop directly
     if scheme==1:
         print "ML_DEFARR: looping directly through 2D image plane..."
 
@@ -21,9 +22,89 @@ def ml_defarr(defarr, xr, yr, nx, ny, cells, stars, scheme=None, bins=None):
                 ximg = xr[0] + (xr[1]-xr[0])*float(iximg)/float(nx)
                 yimg = yr[0] + (yr[1]-yr[0])*float(iyimg)/float(ny)
 
-                defarr[iximg,iyimg,:] = ml_defang(ximg,yimg,cells,stars,None)
+                defarr[iximg,iyimg,:] = ml_defang_iter(ximg,yimg,cells,stars,None)
 
         print
+        return
+
+
+    # -------- scheme 1: loop directly (threaded)
+    elif scheme==-1:
+        print "ML_DEFARR: looping directly through 2D image plane..."
+
+        # -------- dummy function to thread
+        def run_quadrant(conn,xr,yr,nx,ny,cells,stars,verbose=False):
+            quad = np.zeros([nx,ny,2], dtype=np.float64)
+            ximg = np.linspace(xr[0],xr[1],nx,endpoint=False)
+            yimg = np.linspace(yr[0],yr[1],ny,endpoint=False)
+
+            for i in range(nx):
+                if verbose:
+                    print(('ML_DEFARR:   iximg = {0} out ' + 
+                           'of {1}\r').format(i+1, nx)), 
+                    sys.stdout.flush()
+
+                for j in range(ny):
+                    quad[i,j,:] = ml_defang_iter(ximg[i],yimg[j],cells,stars,
+                                                 None)
+
+            if verbose: print
+            conn.send(quad)
+            conn.close()
+
+        # -------- define the ranges and dummy maps
+        xmin, xmax, xmid = xr[0], xr[1], 0.5*(xr[0]+xr[1])
+        ymin, ymax, ymid = yr[0], yr[1], 0.5*(yr[0]+yr[1])
+
+        xrul, yrul = [xmin,xmid], [ymid,ymax]
+        xrur, yrur = [xmid,xmax], [ymid,ymax]
+        xrll, yrll = [xmin,xmid], [ymin,ymid]
+        xrlr, yrlr = [xmid,xmax], [ymin,ymid]
+
+        # -------- initialize results queue
+        parent_conn1, child_conn1 = multiprocessing.Pipe()
+        parent_conn2, child_conn2 = multiprocessing.Pipe()
+        parent_conn3, child_conn3 = multiprocessing.Pipe()
+        parent_conn4, child_conn4 = multiprocessing.Pipe()
+
+        # -------- initialize the threads (only print for first quadrant)
+        threadul = multiprocessing.Process(target=run_quadrant, 
+                                   args=(child_conn1,xrul,yrul,nx/2l,ny/2l, 
+                                         cells,stars), 
+                                   kwargs={'verbose':True})
+        threadur = multiprocessing.Process(target=run_quadrant, 
+                                   args=(child_conn2,xrur,yrur,nx/2l,ny/2l,
+                                         cells,stars))
+        threadll = multiprocessing.Process(target=run_quadrant, 
+                                   args=(child_conn3,xrll,yrll,nx/2l,ny/2l,
+                                         cells,stars))
+        threadlr = multiprocessing.Process(target=run_quadrant, 
+                                   args=(child_conn4,xrlr,yrlr,nx/2l,ny/2l,
+                                         cells,stars))
+
+        # -------- run the threads
+        print "ML_DEFARR: running 4 threads..."
+        threadul.start()
+        threadur.start()
+        threadll.start()
+        threadlr.start()
+
+        # -------- put the threads into the defarr
+        defarr[0:nx/2,  ny/2:ny, :] = parent_conn1.recv()
+        defarr[nx/2:nx, ny/2:ny, :] = parent_conn2.recv()
+        defarr[0:nx/2,  0:ny/2,  :] = parent_conn3.recv()
+        defarr[nx/2:nx, 0:ny/2,  :] = parent_conn4.recv()
+
+        # -------- allow threads to complete
+        threadul.join()
+        print "ML_DEFARR: upper left  thread has joined..."
+        threadur.join()
+        print "ML_DEFARR: upper right thread has joined..."
+        threadll.join()
+        print "ML_DEFARR: lower left  thread has joined..."
+        threadlr.join()
+        print "ML_DEFARR: lower right thread has joined..."
+
         return
 
 # -------- linearly interpolate in fixed cells
