@@ -27,8 +27,8 @@ class magmap():
         xr        = [-15., 15.] if xr==None else xr # in stellar Rein
         yr        = [-15., 15.] if yr==None else yr # in stellar Rein
         nside     = 16 if nside==None else nside # nside of stellar population
-        nximg     = 101 if nximg==None else nximg
-        nyimg     = 101 if nyimg==None else nyimg
+        nximg     = 100 if nximg==None else nximg
+        nyimg     = 100 if nyimg==None else nyimg
         eps       = 0.05 if eps==None else eps # % of deflection of 6th moment
         seed_pos  = 111 if seed_pos==None else seed_pos
         seed_rein = 222 if seed_rein==None else seed_rein
