@@ -15,9 +15,10 @@ class magmap():
 
     # -------- initialize the magnification map parameters
     def __init__(self, kappa, gamma, fstar, nxpix=None, nypix=None,
-                 xr=None, yr=None, seed_pos=None, seed_rein=None, nside=None,
-                 nximg=None, nyimg=None, eps=None, scheme=None, bins=None,
-                 xsrc=None, ysrc=None, ixsrc=None, iysrc=None):
+                 xr=None, yr=None, seed_pos=None, seed_rein=None,
+                 nside=None, nximg=None, nyimg=None, eps=None,
+                 multi=None, recur=None, bins=None, xsrc=None,
+                 ysrc=None, ixsrc=None, iysrc=None):
 
 
         """ Initialize the magnification map parameters """
@@ -77,15 +78,14 @@ class magmap():
 
 
         # -------- initialize the deflection angle map
-        defarr = np.zeros([nximg, nyimg, 2])
         xpos   = xmin + dx*np.arange(nxpix)
         ypos   = ymin + dy*np.arange(nypix)
 
 
         # -------- shoot the rays in the image plane (calculate the
         #          deflection angle at each point
-        ml_defarr(defarr, xrimg, yrimg, nximg, nyimg, cells, stars, \
-                      scheme=scheme, bins=bins)
+        defarr = ml_defarr(xrimg, yrimg, nximg, nyimg, cells, stars, \
+                           multi=multi, recur=recur, bins=bins)
 
         print "ML_MAGMAP: Total number of cells used: ", counters.cellcnt
         print "ML_MAGMAP: Total number of stars used: ", counters.starcnt
