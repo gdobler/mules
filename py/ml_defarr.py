@@ -8,20 +8,24 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=None,
               bins=None):
 
     # -------- defaults
-    multi    = True if multi==None else multi
+    multi    = 4    if multi==None else multi
     recur    = True if recur==None else recur
     bins     = 0    if bins==None  else bins
     def_func = ml_defang if recur else ml_defang_iter
 
 
     # -------- utilities
-    xmin, xmax, xmid = xr[0], xr[1], 0.5*(xr[0]+xr[1])
-    ymin, ymax, ymid = yr[0], yr[1], 0.5*(yr[0]+yr[1])
+    if multi:
+        if ny % multi != 0:
+            print("ML_DEFARR: ERROR: Number of image plane y-pixels must be")
+            print("ML_DEFARR:  an integer number of processors!!!")
+            print("ML_DEFARR:  (i.e., nximg mod multi = 0)")
 
-    xrul, yrul = [xmin,xmid], [ymid,ymax]
-    xrur, yrur = [xmid,xmax], [ymid,ymax]
-    xrll, yrll = [xmin,xmid], [ymin,ymid]
-    xrlr, yrlr = [xmid,xmax], [ymin,ymid]
+            return -1
+
+        nproc = multi
+        dy    = (yr[1]-yr[0])/float(nproc)
+        yrs   = [[i*dy+yr[0],(i+1)*dy+yr[0]] for i in range(nproc)]
 
 
     # -------- loop through the image plane
@@ -31,7 +35,7 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=None,
         yimg = np.linspace(yr[0],yr[1],ny,endpoint=False)
 
         for i in range(nx):
-            if verbose:
+            if verbose and ((i+1) % 5 == 0):
                 print(('ML_DEFARR:     iximg = {0} out ' + 
                        'of {1}\r').format(i+1, nx)), 
                 sys.stdout.flush()
@@ -56,52 +60,28 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=None,
 
     # -------- calculate the deflection angle
     if multi:
-        # -------- initialize the deflection array
-        defarr = np.zeros([nx,ny,2], dtype=np.float64)
+        print("ML_DEFARR:   running {0} processes...".format(nproc))
 
-        # -------- initialize results pipes
-        parent_conn1, child_conn1 = multiprocessing.Pipe()
-        parent_conn2, child_conn2 = multiprocessing.Pipe()
-        parent_conn3, child_conn3 = multiprocessing.Pipe()
-        parent_conn4, child_conn4 = multiprocessing.Pipe()
+        # -------- initialize the deflection array and processes
+        defarr  = np.zeros([nx,ny,2], dtype=np.float64)
+        parents, childs, ps = [], [], []
 
-        # -------- initialize the processes (only print for first quadrant)
-        threadul = multiprocessing.Process(target=run_rect, 
-                                   args=(child_conn1,xrul,yrul,nx/2l,ny/2l, 
-                                         cells,stars), 
-                                   kwargs={'verbose':True})
-        threadur = multiprocessing.Process(target=run_rect, 
-                                   args=(child_conn2,xrur,yrur,nx/2l,ny/2l,
-                                         cells,stars))
-        threadll = multiprocessing.Process(target=run_rect, 
-                                   args=(child_conn3,xrll,yrll,nx/2l,ny/2l,
-                                         cells,stars))
-        threadlr = multiprocessing.Process(target=run_rect, 
-                                   args=(child_conn4,xrlr,yrlr,nx/2l,ny/2l,
-                                         cells,stars))
+        # -------- initialize the pipes and processes, then start
+        for ip in range(nproc):
+            ptemp, ctemp = multiprocessing.Pipe()
+            parents.append(ptemp)
+            childs.append(ctemp)
+            ps.append(multiprocessing.Process(target=run_rect,
+                                              args=(childs[ip],xr,yrs[ip],
+                                                    nx,ny/nproc,cells,stars),
+                                              kwargs={'verbose':ip==0}))
+            ps[ip].start()
 
-        # -------- run the processes
-        print "ML_DEFARR:   running 4 processes..."
-        threadul.start()
-        threadur.start()
-        threadll.start()
-        threadlr.start()
-
-        # -------- put quadrant results into the defarr
-        defarr[0:nx/2,  ny/2:ny, :] = parent_conn1.recv()
-        defarr[nx/2:nx, ny/2:ny, :] = parent_conn2.recv()
-        defarr[0:nx/2,  0:ny/2,  :] = parent_conn3.recv()
-        defarr[nx/2:nx, 0:ny/2,  :] = parent_conn4.recv()
-
-        # -------- allow processes to complete and rejoin
-        threadul.join()
-        print "ML_DEFARR:   upper left  thread has joined..."
-        threadur.join()
-        print "ML_DEFARR:   upper right thread has joined..."
-        threadll.join()
-        print "ML_DEFARR:   lower left  thread has joined..."
-        threadlr.join()
-        print "ML_DEFARR:   lower right thread has joined..."
+        # -------- collect the results, put into defarr, and rejoin
+        for ip in range(nproc):
+            yind = [ny/nproc*ip,ny/nproc*(ip+1)]
+            defarr[0:nx,yind[0]:yind[1],:] = parents[ip].recv()
+            ps[ip].join()
     else:
         defarr = run_rect(-314,xr,yr,nx,ny,cells,stars,verbose=True)
 
