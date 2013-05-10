@@ -1,17 +1,6 @@
 import numpy as np
 from ml_counters import *
 
-
-# -------- global utility (note: The purpose of glones was to
-#          implement a sum via dot(vector,glones[ind]), which is the
-#          optimal method for summing vectors.  Surprisingly, there
-#          turned out to be no significant speed compared to a simple
-#          for loop for the sums.  As such, glones is depricated
-#          here.)
-mmrange = counters.mmrange
-glones  = counters.glones
-
-
 # -------- allocate arrays and utilities outside of the recursion
 sqrt     = np.sqrt
 dot      = np.dot
@@ -20,7 +9,7 @@ cos      = np.cos
 sin      = np.sin
 dt       = np.float64
 nmm      = 20
-mm       = mmrange[0:nmm] + 1.0
+mm       = np.arange(nmm) + 1.0
 amp      = np.zeros(11, dtype=dt)
 cmom     = np.zeros(20, dtype=dt)
 smom     = np.zeros(20, dtype=dt)
@@ -29,6 +18,7 @@ cmmtcell = np.zeros(20, dtype=dt)
 smmtcell = np.zeros(20, dtype=dt)
 alphar   = np.zeros(20, dtype=dt)
 alphat   = np.zeros(20, dtype=dt)
+
 
 def ml_defang(ximg, yimg, cells, stars, cellnum):
 
