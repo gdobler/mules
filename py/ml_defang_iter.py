@@ -32,38 +32,63 @@ def ml_defang_iter(ximg, yimg, cells, stars, cellnum):
     alphay  = 0.0
     clist   = [0,1,2,3]
 
+    # -------- utility function
+    def useallstars(cell, alphax, alphay):
+        stind = cell.stind
+        stind = stind[stind > 0]
+        stsz  = stind.size
+
+        counters.starcnt += stsz
+
+        mi[:stsz]    = stars.rein[stind]
+        delxi[:stsz] = ximg - stars.xstar[stind]
+        delyi[:stsz] = yimg - stars.ystar[stind]
+        mi2ori2[:]   = (mi*mi)/(delxi*delxi + delyi*delyi)
+
+        for i in xrange(stsz):
+            alphax += (delxi*mi2ori2)[i]
+            alphay += (delyi*mi2ori2)[i]
+
+        counters.clist.append(-cellnum)
+
+        return alphax, alphay
 
     
     # -------- loop through the cell list (inserting subcells when 
     #          necessary).
     for cellnum in clist:
+        # -------- grab the cell
+        cell = cells[cellnum]
+
+
+        # -------- are there stars in this cell?
+        nstar = cell.nstar
+        if nstar==0: continue
+
 
         # -------- unpack the cell
         tcind   = clist.index(cellnum)
-        delx    = ximg - cells[cellnum].xcell
-        dely    = yimg - cells[cellnum].ycell
+        delx    = ximg - cell.xcell
+        dely    = yimg - cell.ycell
         rcell   = sqrt(delx*delx + dely*dely)
-        high    = cells[cellnum].high
+        high    = cell.high
 
         # -------- you're obviously inside the cell, break it up
-        if (rcell<1.0e-5) and ~high:
+        if (rcell<1.0e-5) and high!=1:
             clist.insert(tcind+1,4*(cellnum+1) + 3)
             clist.insert(tcind+1,4*(cellnum+1) + 2)
             clist.insert(tcind+1,4*(cellnum+1) + 1)
             clist.insert(tcind+1,4*(cellnum+1) + 0)
-
+            continue
+        elif (rcell<1.0e-5) and high==1:
+            alphax, alphay = useallstars(cell,alphax,alphay)
             continue
 
         # -------- continue unpacking
         tcell   = arctan2(dely,delx)
-        mcell   = cells[cellnum].mcell
-        cmom[:] = cells[cellnum].cmom
-        smom[:] = cells[cellnum].smom
-        nstar   = cells[cellnum].nstar
-
-
-        # -------- there are no stars in this cell
-        if nstar==0: continue
+        mcell   = cell.mcell
+        cmom[:] = cell.cmom
+        smom[:] = cell.smom
 
 
         # -------- calculate the deflection angle up to order 20
@@ -81,31 +106,14 @@ def ml_defang_iter(ximg, yimg, cells, stars, cellnum):
         for i in xrange(11): bcond += amp[i]
 
         if bcond>=0.1:
-
             # -------- already at the highest depth cell, use all stars
-            if high:
-                stind = cells[cellnum].stind
-                stind = stind[stind > 0]
-                stsz  = stind.size
-
-                counters.starcnt += stsz
-
-                mi[:stsz]    = stars.rein[stind]
-                delxi[:stsz] = ximg - stars.xstar[stind]
-                delyi[:stsz] = yimg - stars.ystar[stind]
-                mi2ori2[:]   = (mi*mi)/(delxi*delxi + delyi*delyi)
-
-                for i in xrange(stsz):
-                    alphax += (delxi*mi2ori2)[i]
-                    alphay += (delyi*mi2ori2)[i]
-
-                counters.clist.append(-cellnum)
+            if high==1:
+                alphax, alphay = useallstars(cell,alphax,alphay)
             else:
                 clist.insert(tcind+1,4*(cellnum+1) + 3)
                 clist.insert(tcind+1,4*(cellnum+1) + 2)
                 clist.insert(tcind+1,4*(cellnum+1) + 1)
                 clist.insert(tcind+1,4*(cellnum+1) + 0)
-
                 continue
         else:
             counters.cellcnt += 1
