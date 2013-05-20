@@ -31,6 +31,7 @@ class magmap():
         nximg     = 100 if nximg==None else nximg
         nyimg     = 100 if nyimg==None else nyimg
         eps       = 0.05 if eps==None else eps # % of deflection of 6th moment
+        bins      = 1 if bins==None else bins # subgridding in deflection angle
         seed_pos  = 111 if seed_pos==None else seed_pos
         seed_rein = 222 if seed_rein==None else seed_rein
 
@@ -47,8 +48,8 @@ class magmap():
         xrimg = 1.2*xr / abs(1.0 - kappa - gamma) # emperical factor
         yrimg = 1.2*yr / abs(1.0 - kappa + gamma) # emperical factor
         [xminimg, xmaximg], [yminimg, ymaximg] = xrimg, yrimg
-        dximg = (xmaximg-xminimg)/float(nximg)
-        dyimg = (ymaximg-yminimg)/float(nyimg)
+        dximg = (xmaximg-xminimg)/float(nximg*bins)
+        dyimg = (ymaximg-yminimg)/float(nyimg*bins)
 
         xrst = np.array([min(xrimg[0],yrimg[0]),max(xrimg[1],yrimg[1])])*2.2
         yrst = xrst
@@ -57,8 +58,8 @@ class magmap():
 
 
         # -------- messages
-        print "ML_MAGMAP: Shooting region size: ", dximg*nximg, ' by ', \
-            dyimg*nyimg
+        print "ML_MAGMAP: Shooting region size: ", dximg*nximg*bins, ' by ', \
+            dyimg*nyimg*bins
 
         print "ML_MAGMAP: Number of rays per pixel for unity " + \
             "magnification: ", nraymag1
@@ -97,14 +98,16 @@ class magmap():
 
         # -------- gather rays into source plane pixels
         #          note: definition of meshgrid backwards
-        ximg, yimg = np.meshgrid(np.linspace(xrimg[0],xrimg[1],nximg), \
-                                     np.linspace(yrimg[0],yrimg[1],nyimg))
+        ximg, yimg = np.meshgrid(np.linspace(xrimg[0],xrimg[1],nximg*bins), \
+                                     np.linspace(yrimg[0],yrimg[1],nyimg*bins))
         ximg, yimg = ximg.T, yimg.T
 
         xsrc  = ximg*(1.0-kappac-gamma) - defarr[:,:,0]
         ysrc  = yimg*(1.0-kappac+gamma) - defarr[:,:,1]
-        ixsrc = (np.floor((xsrc-xmin)/dx).astype(int)).reshape(nximg*nyimg)
-        iysrc = (np.floor((ysrc-ymin)/dy).astype(int)).reshape(nximg*nyimg)
+        ixsrc = (np.floor((xsrc-xmin)/dx).astype(int)).reshape(nximg*nyimg* 
+                                                               bins*bins)
+        iysrc = (np.floor((ysrc-ymin)/dy).astype(int)).reshape(nximg*nyimg* 
+                                                               bins*bins)
 
         w = np.where((ixsrc >= 0) & (ixsrc < nxpix) & (iysrc >= 0) & \
                          (iysrc < nypix))[0]
@@ -121,7 +124,7 @@ class magmap():
         magarr[:len(isrc_ring)] += isrc_ring
         magarr = magarr.reshape(nxpix,nypix)
 
-        print "ML_MAGMAP: Number of rays shot: ", nximg*nyimg
+        print "ML_MAGMAP: Number of rays shot: ", nximg*nyimg*bins*bins
         print "ML_MAGMAP: Number of rays landed: ", w.size
         print "ML_MAGMAP: Double check: ", np.sum(magarr)
 
@@ -136,6 +139,7 @@ class magmap():
         self.nside     = nside
         self.nximg     = nximg
         self.nyimg     = nyimg
+        self.bins      = bins
         self.eps       = eps
         self.seed_pos  = seed_pos
         self.seed_rein = seed_rein
