@@ -9,18 +9,21 @@ class treecell():
         ??? : ???
     """
 
-    def __init__(self, icell, nstar, xcell, ycell, mcell, cmom, smom, high, \
-                     stind):
+    def __init__(self, icell, nstar, xcell, ycell, mcell, xside,
+                 yside, cmom, smom, high, stind):
 
         self.dtype = 'treecell'
-        self.names =['icell', 'nstar', 'xcell', 'ycell', 'mcell', 'cmom', \
-                         'smom', 'high', 'stind']
+        self.names =['icell', 'nstar', 'xcell', 'ycell', 'mcell',
+                     'xside', 'yside', 'cmom', 'smom', 'high',
+                     'stind']
 
         self.icell = icell
         self.nstar = nstar
         self.xcell = xcell
         self.ycell = ycell
         self.mcell = mcell
+        self.xside = xside
+        self.yside = yside
         self.cmom  = cmom
         self.smom  = smom
         self.high  = high
@@ -38,6 +41,8 @@ class treecell():
                 'xcell' : self.xcell, \
                 'ycell' : self.ycell, \
                 'mcell' : self.mcell, \
+                'xside' : self.xside, \
+                'yside' : self.yside, \
                 'cmom'  : self.cmom, \
                 'smom'  : self.smom, \
                 'high'  : self.high, \
@@ -55,7 +60,9 @@ def gencells(stars):
     ystar = stars.ystar
     rein  = stars.rein
     nside = stars.nside
-    cpos  = ml_cellpos(stars.xrange_st, stars.yrange_st, nside)
+    xrst  = stars.xrange_st
+    yrst  = stars.yrange_st
+    cpos  = ml_cellpos(xrst, yrst, nside)
     nlev  = np.log2(nside).astype(int)
     cmin  = np.sum(4**np.arange(nlev)).astype(int) - 1
     ncell = nside**2
@@ -77,6 +84,9 @@ def gencells(stars):
         tcmax  = tcmin + tncell
         dcell  = ncell/tncell
 
+        txside = (xrst[1]-xrst[0])/2.0**(ilev+1)
+        tyside = (xrst[1]-xrst[0])/2.0**(ilev+1)
+
         for icell in range(tncell):
             tcell  = tcmin + icell
             stind  = np.where((sicell >= cmin + icell*dcell) & \
@@ -94,14 +104,14 @@ def gencells(stars):
                 ti    = np.arctan2(delyi, delxi)
                 mi    = stars.rein[stind]
 
-                mm = np.arange(20.)+1.0
+                nmm = 20
 
-                for imm in range(len(mm)):
-                    cc = np.sum(mi*mi * ri**mm[imm] * np.cos(mm[imm]*ti))
-                    ss = np.sum(mi*mi * ri**mm[imm] * np.sin(mm[imm]*ti))
+                for m in range(1,nmm+1):
+                    cc = np.sum(mi*mi * ri**float(m) * np.cos(m*ti))
+                    ss = np.sum(mi*mi * ri**float(m) * np.sin(m*ti))
 
-                    tcmom = cc if imm==0 else np.append(tcmom,cc)
-                    tsmom = ss if imm==0 else np.append(tsmom,ss)
+                    tcmom = cc if m==1 else np.append(tcmom,cc)
+                    tsmom = ss if m==1 else np.append(tsmom,ss)
 
                 thigh  = int(tcell >= cmin) # flag highest cell
                 tstind = -np.ones(maxst,dtype=int)
@@ -119,8 +129,9 @@ def gencells(stars):
 
 
             # pack into a list of tree cell classes
-            ttree = treecell(tcell, tnstar, tposx, tposy, tmass, tcmom, \
-                                 tsmom, thigh, tstind)
+            ttree = treecell(tcell, tnstar, tposx, tposy, tmass,
+                             txside, tyside, tcmom, tsmom, thigh,
+                             tstind)
 
             if (ilev==0) & (icell==0):
                 cells = [ttree] 
