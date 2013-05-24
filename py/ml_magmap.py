@@ -45,8 +45,16 @@ class magmap():
         [xmin, xmax], [ymin, ymax] = xr, yr
         dx, dy = (xmax-xmin)/float(nxpix), (ymax-ymin)/float(nypix)
 
-        xrimg = 1.2*xr / abs(1.0 - kappa - gamma) # emperical factor
-        yrimg = 1.2*yr / abs(1.0 - kappa + gamma) # emperical factor
+#        xrimg = 1.2*xr / abs(1.0 - kappa - gamma) # emperical factor
+#        yrimg = 1.2*yr / abs(1.0 - kappa + gamma) # emperical factor
+        xrimg = xr / abs(1.0 - kappa - gamma) # emperical factor
+        yrimg = yr / abs(1.0 - kappa + gamma) # emperical factor
+
+        xrimg[0] -= 2.0
+        xrimg[1] += 2.0
+        yrimg[0] -= 2.0
+        yrimg[1] += 2.0
+
         [xminimg, xmaximg], [yminimg, ymaximg] = xrimg, yrimg
         dximg = (xmaximg-xminimg)/float(nximg*bins)
         dyimg = (ymaximg-yminimg)/float(nyimg*bins)
@@ -97,13 +105,14 @@ class magmap():
         print "ML_MAGMAP: Total number of stars used: ", counters.starcnt
 
         # -------- gather rays into source plane pixels
-        #          note: definition of meshgrid backwards
-        ximg, yimg = np.meshgrid(np.linspace(xrimg[0],xrimg[1],nximg*bins), \
-                                     np.linspace(yrimg[0],yrimg[1],nyimg*bins))
-        ximg, yimg = ximg.T, yimg.T
+        ximg, yimg = np.meshgrid(np.linspace(xrimg[0], xrimg[1],
+                                             nximg*bins, endpoint=False),
+                                 np.linspace(yrimg[0], yrimg[1],
+                                             nyimg*bins, endpoint=False),
+                                 indexing='ij')
 
-        xsrc  = ximg*(1.0-kappac-gamma) - defarr[:,:,0]
-        ysrc  = yimg*(1.0-kappac+gamma) - defarr[:,:,1]
+        xsrc  = ximg*(1.0-kappac-gamma) + defarr[:,:,0]
+        ysrc  = yimg*(1.0-kappac+gamma) + defarr[:,:,1]
         ixsrc = (np.floor((xsrc-xmin)/dx).astype(int)).reshape(nximg*nyimg* 
                                                                bins*bins)
         iysrc = (np.floor((ysrc-ymin)/dy).astype(int)).reshape(nximg*nyimg* 
