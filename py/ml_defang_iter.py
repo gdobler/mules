@@ -41,13 +41,15 @@ def ml_defang_iter(ximg, yimg, cells, stars, cellnum):
         counters.starcnt += stsz
 
         mi[:stsz]    = stars.rein[stind]
-        delxi[:stsz] = ximg - stars.xstar[stind]
-        delyi[:stsz] = yimg - stars.ystar[stind]
+        delxi[:stsz] = stars.xstar[stind] - ximg
+        delyi[:stsz] = stars.ystar[stind] - yimg
         mi2ori2[:]   = (mi*mi)/(delxi*delxi + delyi*delyi)
+        axvec        = delxi*mi2ori2
+        ayvec        = delyi*mi2ori2
 
         for i in xrange(stsz):
-            alphax += (delxi*mi2ori2)[i]
-            alphay += (delyi*mi2ori2)[i]
+            alphax += axvec[i]
+            alphay += ayvec[i]
 
         counters.clist.append(-cellnum)
 
@@ -68,21 +70,23 @@ def ml_defang_iter(ximg, yimg, cells, stars, cellnum):
 
         # -------- unpack the cell
         tcind   = clist.index(cellnum)
-        delx    = ximg - cell.xcell
-        dely    = yimg - cell.ycell
+        delx    = cell.xcell - ximg
+        dely    = cell.ycell - yimg
         rcell   = sqrt(delx*delx + dely*dely)
         high    = cell.high
+        cside   = 0.5*(cell.xside+cell.yside)
 
-        # -------- you're obviously inside the cell, break it up
-        if (rcell<1.0e-5) and high!=1:
-            clist.insert(tcind+1,4*(cellnum+1) + 3)
-            clist.insert(tcind+1,4*(cellnum+1) + 2)
-            clist.insert(tcind+1,4*(cellnum+1) + 1)
-            clist.insert(tcind+1,4*(cellnum+1) + 0)
-            continue
-        elif (rcell<1.0e-5) and high==1:
-            alphax, alphay = useallstars(cell,alphax,alphay)
-            continue
+        # -------- break up the cell
+        if (rcell<0.6*1.5*cside):
+            if high!=1:
+                clist.insert(tcind+1,4*(cellnum+1) + 3)
+                clist.insert(tcind+1,4*(cellnum+1) + 2)
+                clist.insert(tcind+1,4*(cellnum+1) + 1)
+                clist.insert(tcind+1,4*(cellnum+1) + 0)
+                continue
+            else:
+                alphax, alphay = useallstars(cell,alphax,alphay)
+                continue
 
         # -------- continue unpacking
         tcell   = arctan2(dely,delx)
@@ -100,34 +104,18 @@ def ml_defang_iter(ximg, yimg, cells, stars, cellnum):
         alphat[:]   = (cmom*smmtcell-smom*cmmtcell)*oormp1
 
 
-        # -------- large multipole moments are too high, break up cell
-        amp[:] = sqrt(alphar*alphar+alphat*alphat)[nmm-11:nmm]
-        bcond  = 0.0
-        for i in xrange(11): bcond += amp[i]
+        counters.cellcnt += 1
 
-        if bcond>=0.1:
-            # -------- already at the highest depth cell, use all stars
-            if high==1:
-                alphax, alphay = useallstars(cell,alphax,alphay)
-            else:
-                clist.insert(tcind+1,4*(cellnum+1) + 3)
-                clist.insert(tcind+1,4*(cellnum+1) + 2)
-                clist.insert(tcind+1,4*(cellnum+1) + 1)
-                clist.insert(tcind+1,4*(cellnum+1) + 0)
-                continue
-        else:
-            counters.cellcnt += 1
+        talphar   = alphar0
+        talphat   = 0.0
 
-            talphar   = alphar0
-            talphat   = 0.0
+        for i in xrange(20):
+            talphar += alphar[i]
+            talphat += alphat[i]
 
-            for i in xrange(20):
-                talphar += alphar[i]
-                talphat += alphat[i]
+        alphax += (delx*talphar - dely*talphat)/rcell
+        alphay += (dely*talphar + delx*talphat)/rcell
 
-            alphax += (delx*talphar - dely*talphat)/rcell
-            alphay += (dely*talphar + delx*talphat)/rcell
-
-            counters.clist.append(cellnum)
+        counters.clist.append(cellnum)
 
     return alphax, alphay
