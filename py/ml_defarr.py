@@ -4,13 +4,11 @@ from ml_defang import *
 import sys
 import multiprocessing
 
-def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=None,
-              bins=None):
+def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=True,
+              bins=1):
 
     # -------- defaults
-    multi    = 4    if multi==None else multi
-    recur    = True if recur==None else recur
-    bins     = 1    if bins==None  else bins
+    multi    = 4 if multi==None else multi
     def_func = ml_defang if recur  else ml_defang_iter
 
 
@@ -55,7 +53,7 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=None,
     print("ML_DEFARR: looping through the 2D image plane with:")
     print("ML_DEFARR:   multiprocessing      : " + ("ON" if multi  else "OFF"))
     print("ML_DEFARR:   recursion            : " + ("ON" if recur  else "OFF"))
-    print("ML_DEFARR:   subgrid inerpolation : " + ("ON" if bins>0 else "OFF"))
+    print("ML_DEFARR:   subgrid inerpolation : " + ("ON" if bins>1 else "OFF"))
 
 
     # -------- calculate the deflection angle
