@@ -18,7 +18,8 @@ class magmap():
                  xr=None, yr=None, seed_pos=None, seed_rein=None,
                  nside=None, nximg=None, nyimg=None, eps=None,
                  multi=None, recur=None, bins=None, xsrc=None,
-                 ysrc=None, ixsrc=None, iysrc=None):
+                 ysrc=None, ixsrc=None, iysrc=None, beta=None,
+                 mbar=None, mrat=None):
 
 
         """ Initialize the magnification map parameters """
@@ -34,6 +35,9 @@ class magmap():
         bins      = 1 if bins==None else bins # subgridding in deflection angle
         seed_pos  = 111 if seed_pos==None else seed_pos
         seed_rein = 222 if seed_rein==None else seed_rein
+        beta      = 0.0 if beta==None else beta
+        mbar      = 1.0 if mbar==None else mbar
+        mrat      = 1.0 if mrat==None else mrat
 
 
         # -------- utilities
@@ -76,7 +80,8 @@ class magmap():
 
 
         # -------- initialize the stars and cells
-        stars  = genstars(kappas, xrst, yrst, nside, seed_pos, seed_rein)
+        stars = genstars(kappas, xrst, yrst, nside, seed_pos,
+                         seed_rein, beta=beta, mbar=mbar, mrat=mrat)
         cells  = gencells(stars)
         nstars = np.array([i.nstar for i in cells])
 
