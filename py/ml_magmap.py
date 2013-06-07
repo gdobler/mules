@@ -240,7 +240,7 @@ class magmap():
           get actual physical values, the distances must be converted 
           to times via some velocity.
 
-          [distance] = map units, [angle] = degrees, [origin] = pixels
+          [distance] = map units, [angle] = degrees, [origin] = map units
         """
 
         # -------- set the map and origin
@@ -253,9 +253,7 @@ class magmap():
         if origin==None:
             origin = [i//2 for i in mmap.shape]
         else:
-            origin = [int(round((float(i)-x0)/dx)) for i in origin]
-
-        
+            origin = [int(round((i-x0)*float(nxpix)/dx)) for i in origin]
 
 
         # -------- determine the x and y pixel values
