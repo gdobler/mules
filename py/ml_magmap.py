@@ -1,4 +1,6 @@
+import sys
 import numpy as np
+from scipy import ndimage
 from ml_gencells import *
 from ml_genstars import *
 from ml_counters import *
@@ -38,6 +40,13 @@ class magmap():
         beta      = 0.0 if beta==None else beta
         mbar      = 1.0 if mbar==None else mbar
         mrat      = 1.0 if mrat==None else mrat
+
+
+        # -------- make sure source plane is a square
+        if nxpix!=nypix:
+            print("ML_MAGMAP: ERROR - source plane must be square...")
+            print("ML_MAGMAP:         i.e., nxpix=nypix")
+            sys.exit(-1)
 
 
         # -------- utilities
@@ -166,33 +175,53 @@ class magmap():
 
 
     # -------- convolve the magnification map with a source morphology
-#    def convmap(self, type=None):
+    def convmap(self, rsrc, stype=None):
 
-# type 1 is a Gaussian
-#
-# set the source size
-#
-# determine the units of the source size in pixels (compared to Rein).
-# this is going to involve ratios of number of pixels.
-#
-# set a minimum number of pixels for the convolution.  for example
-# problems could arise in which the source size is like 0.1, but
-# magarr is only sampled at 1 Rein...  what to do in that case?
-#
-# do the convolution
-#
-# what to do if we don't want a Gaussian?
-#
-# uniform source is possible
-#
-# random little clouds
-#
-# passing a convolution kernel should be allowed
-#
-# we should store the postage same of the convolution kernel
-#
-# we should also store some parameters for the convolution kernel.
-# what should those be?  rsrc is an obvious one, but what else?
-#
-# need some support functions to go from Rein to physical
-# size/wavelength
+        # defaults
+        if stype==None: stype='gaussian' # default Gaussian
+
+
+        # Gaussian type
+        if stype.lower()=='gaussian':
+
+            # set the appropriate side length for the kernel
+            rmax   = 2.0*rsrc*np.sqrt(np.log(10.)) # 99% containment
+            pixsz  = (self.xr[1]-self.xr[0])/float(self.nxpix)
+            side   = np.arange(-rmax,rmax,pixsz)
+
+            # create the kernel
+            xm, ym = np.meshgrid(side,side,indexing='ij')
+            kernel = np.exp(-(xm**2+ym**2)/(2.0*rsrc**2))/(2.0*np.pi*rsrc**2)
+
+
+        # do the convolution and set attributes
+        self.rsrc   = rsrc
+        self.stype  = stype
+        self.kernel = kernel
+        self.conmap = ndimage.convolve(self.magarr,kernel)
+
+        return
+
+
+
+        # set a minimum number of pixels for the convolution.  for example
+        # problems could arise in which the source size is like 0.1, but
+        # magarr is only sampled at 1 Rein...  what to do in that case?
+        #
+        # do the convolution
+        #
+        # what to do if we don't want a Gaussian?
+        #
+        # uniform source is possible
+        #
+        # random little clouds
+        #
+        # passing a convolution kernel should be allowed
+        #
+        # we should store the postage same of the convolution kernel
+        #
+        # we should also store some parameters for the convolution kernel.
+        # what should those be?  rsrc is an obvious one, but what else?
+        #
+        # need some support functions to go from Rein to physical
+        # size/wavelength
