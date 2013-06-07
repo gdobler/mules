@@ -171,6 +171,10 @@ class magmap():
         self.cells     = cells
         self.defarr    = defarr
         self.magarr    = magarr
+        self.rsrc      = 0.0
+        self.stype     = ''
+        self.kernel    = np.zeros([1,1])
+        self.magcon    = np.zeros(self.magarr.shape)
 
 
 
@@ -192,13 +196,15 @@ class magmap():
             # create the kernel
             xm, ym = np.meshgrid(side,side,indexing='ij')
             kernel = np.exp(-(xm**2+ym**2)/(2.0*rsrc**2))/(2.0*np.pi*rsrc**2)
+            origin = [i//2 if i%2>0 else i//2-1 for i in kernel.shape]
 
 
         # do the convolution and set attributes
-        self.rsrc   = rsrc
-        self.stype  = stype
-        self.kernel = kernel
-        self.conmap = ndimage.convolve(self.magarr,kernel)
+        self.rsrc    = rsrc
+        self.stype   = stype
+        self.kernel  = kernel
+        self.magcon  = ndimage.convolve(self.magarr,kernel,origin=origin)
+        self.magcon *= pixsz*pixsz # ndimage.convolve is sum not integral
 
         return
 
