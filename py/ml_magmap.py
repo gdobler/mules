@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from scipy import ndimage
+from scipy import ndimage, interpolate
 from ml_gencells import *
 from ml_genstars import *
 from ml_counters import *
@@ -43,9 +43,9 @@ class magmap():
 
 
         # -------- make sure source plane is a square
-        if nxpix!=nypix:
+        if (nxpix!=nypix) or (xr[0]!=yr[0]) or (xr[1]!=yr[1]):
             print("ML_MAGMAP: ERROR - source plane must be square...")
-            print("ML_MAGMAP:         i.e., nxpix=nypix")
+            print("ML_MAGMAP:         i.e., nxpix=nypix, xr=yr")
             sys.exit(-1)
 
 
@@ -174,7 +174,7 @@ class magmap():
         self.rsrc      = 0.0
         self.stype     = ''
         self.kernel    = np.zeros([1,1])
-        self.magcon    = np.zeros(self.magarr.shape)
+        self.magcon    = magarr
 
 
 
@@ -196,19 +196,16 @@ class magmap():
             # create the kernel
             xm, ym = np.meshgrid(side,side,indexing='ij')
             kernel = np.exp(-(xm**2+ym**2)/(2.0*rsrc**2))/(2.0*np.pi*rsrc**2)
-            origin = [i//2 if i%2>0 else i//2-1 for i in kernel.shape]
 
 
         # do the convolution and set attributes
         self.rsrc    = rsrc
         self.stype   = stype
         self.kernel  = kernel
-        self.magcon  = ndimage.convolve(self.magarr,kernel,origin=origin)
+        self.magcon  = ndimage.convolve(self.magarr,kernel)
         self.magcon *= pixsz*pixsz # ndimage.convolve is sum not integral
 
         return
-
-
 
         # set a minimum number of pixels for the convolution.  for example
         # problems could arise in which the source size is like 0.1, but
@@ -231,3 +228,55 @@ class magmap():
         #
         # need some support functions to go from Rein to physical
         # size/wavelength
+
+
+
+    # -------- generate a light curve for the magnification map
+    def lightcurve(self, distance, angle, nsamp, conv=None, origin=None):
+
+        """
+          Samples the magnification map (or convolved map) from the 
+          origin for a given distance and angle for nsamp points.  To 
+          get actual physical values, the distances must be converted 
+          to times via some velocity.
+
+          [distance] = map units, [angle] = degrees, [origin] = pixels
+        """
+
+        # -------- set the map and origin
+        nxpix = self.nxpix
+        nypix = self.nypix
+        x0    = self.xr[0]
+        dx    = self.xr[1]-x0
+        mmap  = self.magarr if conv==None else self.magcon
+
+        if origin==None:
+            origin = [i//2 for i in mmap.shape]
+        else:
+            origin = [int(round((float(i)-x0)/dx)) for i in origin]
+
+        
+
+
+        # -------- determine the x and y pixel values
+        rad   = angle*np.pi/180.0
+        crad  = np.cos(rad)
+        srad  = np.sin(rad)
+        pixsz = dx/float(nxpix)
+        drpix = distance/dx * float(nxpix)/float(nsamp)
+        ix    = [i*drpix*crad+origin[0] for i in range(nsamp)]
+        iy    = [i*drpix*srad+origin[1] for i in range(nsamp)]
+
+
+        # -------- check boundaries
+        if (min(ix)<0) or (min(iy)<0) or (max(ix)>nxpix) or (max(iy)>nypix):
+            print("ML_MAGMAP: Error - lightcurve too long!!!")
+            sys.exit(-1)
+
+
+        # -------- interpolate onto light curve pixels
+        #          (using interp2d!!!)
+        x, y   = np.arange(float(nxpix)), np.arange(float(nypix))
+        mapint = interpolate.interp2d(x,y,mmap,kind='cubic')
+
+        return np.array([mapint(i,j)[0] for i,j in zip(*[iy,ix])])
