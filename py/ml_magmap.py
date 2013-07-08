@@ -19,9 +19,9 @@ class magmap():
     def __init__(self, kappa, gamma, fstar, nxpix=None, nypix=None,
                  xr=None, yr=None, seed_pos=None, seed_rein=None,
                  nside=None, nximg=None, nyimg=None, eps=None,
-                 multi=None, recur=None, bins=None, xsrc=None,
-                 ysrc=None, ixsrc=None, iysrc=None, beta=None,
-                 mbar=None, mrat=None):
+                 multi=None, bins=None, xsrc=None, ysrc=None,
+                 ixsrc=None, iysrc=None, beta=None, mbar=None,
+                 mrat=None):
 
 
         """ Initialize the magnification map parameters """
@@ -58,11 +58,8 @@ class magmap():
         [xmin, xmax], [ymin, ymax] = xr, yr
         dx, dy = (xmax-xmin)/float(nxpix), (ymax-ymin)/float(nypix)
 
-#        xrimg = 1.2*xr / abs(1.0 - kappa - gamma) # emperical factor
-#        yrimg = 1.2*yr / abs(1.0 - kappa + gamma) # emperical factor
-        xrimg = xr / abs(1.0 - kappa - gamma) # emperical factor
-        yrimg = yr / abs(1.0 - kappa + gamma) # emperical factor
-
+        xrimg     = 1.05*xr / abs(1.0 - kappa - gamma) # emperical factor
+        yrimg     = 1.05*yr / abs(1.0 - kappa + gamma) # emperical factor
         xrimg[0] -= 2.0
         xrimg[1] += 2.0
         yrimg[0] -= 2.0
@@ -108,7 +105,7 @@ class magmap():
         # -------- shoot the rays in the image plane (calculate the
         #          deflection angle at each point
         defarr = ml_defarr(xrimg, yrimg, nximg, nyimg, cells, stars, \
-                           multi=multi, recur=recur, bins=bins)
+                           multi=multi, bins=bins)
 
         if (len(defarr)==1) and (defarr==-1):
             print("ML_MAGMAP: ERROR: # of processors (multi kw) ")
