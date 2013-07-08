@@ -4,12 +4,10 @@ from ml_defang import *
 import sys
 import multiprocessing
 
-def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=True,
-              bins=1):
+def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, bins=1):
 
     # -------- defaults
     multi    = 4 if multi==None else multi
-    def_func = ml_defang if recur  else ml_defang_iter
 
 
     # -------- utilities
@@ -39,7 +37,7 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=True,
                 sys.stdout.flush()
 
             for j in range(ny):
-                rect[i,j,:] = def_func(ximg[i],yimg[j],cells,stars,None)
+                rect[i,j,:] = ml_defang_iter(ximg[i],yimg[j],cells,stars,None)
 
         if verbose: print
         if multi:
@@ -52,7 +50,6 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, recur=True,
     # -------- announce the method
     print("ML_DEFARR: looping through the 2D image plane with:")
     print("ML_DEFARR:   multiprocessing      : " + ("ON" if multi  else "OFF"))
-    print("ML_DEFARR:   recursion            : " + ("ON" if recur  else "OFF"))
     print("ML_DEFARR:   subgrid inerpolation : " + ("ON" if bins>1 else "OFF"))
 
 
