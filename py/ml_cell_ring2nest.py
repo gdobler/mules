@@ -35,8 +35,8 @@ def ml_cell_ring2nest(cell_ring, nside=None, quiet=None):
     yring = cell_ring / nside
 
     if quiet==None:
-        print 'ML_CELL_RING2NEST: ' + \
-            'converting cells with nside = {0}'.format(nside)
+        print("ML_CELL_RING2NEST: converting cells with nside = {0}"
+              .format(nside))
 
 
 

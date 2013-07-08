@@ -77,7 +77,7 @@ def gencells(stars):
 
 # --------  loop through the cells and claulate the multipole moments
     for ilev in range(nlev):
-        print 'ML_GENCELLS: Building level {0} of {1}'.format(ilev,nlev-1)
+        print("ML_GENCELLS: Building level {0} of {1}".format(ilev,nlev-1))
 
         tncell = 4**(ilev+1)
         tcmin  = np.sum(4**np.arange(ilev+1))-1

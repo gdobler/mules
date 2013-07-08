@@ -153,7 +153,7 @@ def genstars(kappas, xrange_st, yrange_st, nside, seed_pos, seed_rein,
     dely   = yrange_st[1]-yrange_st[0]
     nstars = int(round(kappas*delx*dely/np.pi))
 
-    print "ML_GENSTARS: Creating star field with {0} stars".format(nstars)
+    print("ML_GENSTARS: Creating star field with {0} stars".format(nstars))
 
 
 
