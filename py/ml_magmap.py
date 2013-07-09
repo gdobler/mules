@@ -76,13 +76,11 @@ class magmap():
 
 
         # -------- messages
-        print "ML_MAGMAP: Shooting region size: ", dximg*nximg*bins, ' by ', \
-            dyimg*nyimg*bins
-
-        print "ML_MAGMAP: Number of rays per pixel for unity " + \
-            "magnification: ", nraymag1
-
-        print "ML_MAGMAP: Size of stars region: ", xrst, yrst
+        print("ML_MAGMAP: Shooting region size: {0} by {1}"
+              .format(dximg*nximg*bins, dyimg*nyimg*bins))
+        print("ML_MAGMAP: Number of rays per pixel for unity " + 
+              "magnification: {0}".format(nraymag1))
+        print("ML_MAGMAP: Size of stars region: {0} {1}".format(xrst, yrst))
 
 
         # -------- initialize the stars and cells
@@ -93,8 +91,8 @@ class magmap():
 
         counters.maxnst = max(nstars[np.array([i.high for i in cells])==1])
 
-        print "ML_MAGMAP: Mean number of stars per highest cell: ", \
-            np.mean(nstars[np.array([i.high for i in cells])==1])
+        print("ML_MAGMAP: Mean number of stars per highest cell: {0}"
+              .format(np.mean(nstars[np.array([i.high for i in cells])==1])))
 
 
         # -------- initialize the deflection angle map
@@ -112,8 +110,6 @@ class magmap():
             print("ML_MAGMAP:   inappropriately set... aborting.")
             return
 
-        print "ML_MAGMAP: Total number of cells used: ", counters.cellcnt
-        print "ML_MAGMAP: Total number of stars used: ", counters.starcnt
 
         # -------- gather rays into source plane pixels
         ximg, yimg = np.meshgrid(np.linspace(xrimg[0], xrimg[1],
@@ -133,7 +129,7 @@ class magmap():
                          (iysrc < nypix))[0]
 
         if w.size==0:
-            print "ML_MAGMAP: NO RAYS DEFLECTED INTO SOURCE PLANE GRID!!!"
+            print("ML_MAGMAP: NO RAYS DEFLECTED INTO SOURCE PLANE GRID!!!")
             return
 
         isrc_ring = np.bincount(ixsrc[w] + iysrc[w]*nxpix)        
@@ -144,14 +140,20 @@ class magmap():
         magarr[:len(isrc_ring)] += isrc_ring
         magarr = magarr.reshape(nxpix,nypix)
 
-        print "ML_MAGMAP: Number of rays shot: ", nximg*nyimg*bins*bins
-        print "ML_MAGMAP: Number of rays landed: ", w.size
-        print "ML_MAGMAP: Double check: ", np.sum(magarr)
+        print("ML_MAGMAP: Number of rays shot: {0}"
+              .format(nximg*nyimg*bins*bins))
+        print("ML_MAGMAP: Number of rays landed: {0}"
+              .format(w.size))
 
         magarr /= nraymag1
 
 
         # -------- set attributes
+        self.names = ['nxpix', 'nypix', 'xr', 'yr', 'nside', 'nximg',
+                      'nyimg', 'bins', 'eps', 'seed_pos',
+                      'seed_rein','nraymag1', 'stars', 'cells', 'defarr',
+                      'magarr', 'rsrc', 'stype', 'kernel', 'magcon']
+
         self.nxpix     = nxpix
         self.nypix     = nypix
         self.xr        = xr
@@ -275,3 +277,35 @@ class magmap():
         mapint = interpolate.interp2d(x,y,mmap,kind='cubic')
 
         return np.array([mapint(i,j)[0] for i,j in zip(*[iy,ix])])
+
+
+
+    # -------- return an item by its name
+    def __getitem__(self, key):
+
+        """ Return an item by its name."""
+
+        data = { 
+            'nxpix'     : self.nxpix,
+            'nypix'     : self.nypix,
+            'xr'        : self.xr,
+            'yr'        : self.yr,
+            'nside'     : self.nside,
+            'nximg'     : self.nximg,
+            'nyimg'     : self.nyimg,
+            'bins'      : self.bins,
+            'eps'       : self.eps,
+            'seed_pos'  : self.seed_pos,
+            'seed_rein' : self.seed_rein,
+            'nraymag1'  : self.nraymag1,
+            'stars'     : self.stars,
+            'cells'     : self.cells,
+            'defarr'    : self.defarr,
+            'magarr'    : self.magarr,
+            'rsrc'      : self.rsrc,
+            'stype'     : self.stype,
+            'kernel'    : self.kernel,
+            'magcon'    : self.magcon
+        }
+
+        return data[key]

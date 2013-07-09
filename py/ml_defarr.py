@@ -1,10 +1,59 @@
+B1;2c# -*- coding: utf-8 -*-
+
 from scipy import interpolate
 from ml_defang_iter import *
-from ml_defang import *
 import sys
 import multiprocessing
+from ml_counters import *
 
 def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, bins=1):
+
+    """
+    NAME:
+      ml_defarr
+
+    PURPOSE:
+      Calculate a map of the deflection angle in both the x and y 
+      directions as a function of position in the image plane.  The 
+      specified y range is broken up into N subgrids (where N=multi) 
+      and sent out to N different processors.  Parallel processing 
+      can be turned off by setting keyword "multi=False".  The grid 
+      is initially coarse but subgridded by a factor of bins in each 
+      direction.
+
+    CALLING SEQUENCE:
+      defarr = ml_defarr(xr, yr, nx, ny, cells, stars, [multi =, bins= ])
+
+    INPUTS:
+      xr    - the x range of the image plane
+      yr    - the y range of the image plane
+      nx    - the number of coarse pixels in x
+      ny    - the number of coarse pixels in y
+      cells - multipole moments of star population (list of treecell classes)
+      stars - the stellar population (starfield class)
+
+    OPTIONAL INPUTS:
+      multi - number of processors to use (default = 4)
+      bins  - number of subgrid bins in x and y (default = 1)
+
+    KEYWORDS:
+
+    OUTPUTS:
+      defarr - deflection angle map
+               (defx = defarr[nx*bins,ny*bins,0]
+                defx = defarr[nx*bins,ny*bins,1])
+
+    OPTIONAL OUTPUTS:
+
+    EXAMPLES:
+
+    COMMENTS:
+
+    REVISION HISTORY:
+      2013/05/09 - Written by Greg Dobler (KITP/UCSB)
+
+    ------------------------------------------------------------
+    """
 
     # -------- defaults
     multi    = 4 if multi==None else multi
@@ -37,9 +86,15 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, bins=1):
                 sys.stdout.flush()
 
             for j in range(ny):
-                rect[i,j,:] = ml_defang_iter(ximg[i],yimg[j],cells,stars,None)
+                rect[i,j,:] = ml_defang_iter(ximg[i],yimg[j],cells,stars)
 
-        if verbose: print
+        if verbose:
+            print
+            print("ML_DEFARR: Total number of cells used ≈ {0}"
+                  .format(counters.cellcnt*nproc))
+            print("ML_DEFARR: Total number of stars used ≈ {0}"
+                  .format(counters.starcnt*nproc))
+
         if multi:
             conn.send(rect)
             conn.close()
