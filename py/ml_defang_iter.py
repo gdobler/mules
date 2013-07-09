@@ -1,7 +1,46 @@
 import numpy as np
 from ml_counters import *
 
-def ml_defang_iter(ximg, yimg, cells, stars, cellnum):
+def ml_defang_iter(ximg, yimg, cells, stars):
+
+    """
+    NAME:
+      ml_defang_iter
+
+    PURPOSE:
+      Recursively (actually semi-iteratively) calculate the deflection 
+      angle due to stars at the image plane position ximg,yimg using the 
+      cell multipoles or (if those are too large for a given cell/ximg/yimg 
+      combination) the star field itself.
+
+    CALLING SEQUENCE:
+      alphax, alphay = ml_defan_iter(ximg, yimg, cells, stars)
+
+    INPUTS:
+      ximg  - x position in the image plane
+      yimg  - y position in the image plane
+      cells - multipole moments of star population (list of treecell classes)
+      stars - the stellar population (starfield class)
+
+    OPTIONAL INPUTS:
+
+    KEYWORDS:
+
+    OUTPUTS:
+      alphax - x component of the deflection angle
+      alphay - y component of the deflection angle
+
+    OPTIONAL OUTPUTS:
+
+    EXAMPLES:
+
+    COMMENTS:
+
+    REVISION HISTORY:
+      2013/05/09 - Written by Greg Dobler (KITP/UCSB)
+
+    ------------------------------------------------------------
+    """
 
     # -------- allocate arrays and utilities outside of the iteration
     sqrt     = np.sqrt
