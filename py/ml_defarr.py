@@ -1,4 +1,4 @@
-B1;2c# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from scipy import interpolate
 from ml_defang_iter import *
