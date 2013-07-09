@@ -1,6 +1,8 @@
 import sys
+import datetime
 import numpy as np
 from scipy import ndimage, interpolate
+import pyfits as fits
 from ml_gencells import *
 from ml_genstars import *
 from ml_counters import *
@@ -196,6 +198,43 @@ class magmap():
 
 
 
+    # -------- write magnification map and important parameters to fits
+    def write_fits(self, filename, path=None):
+
+        """ Write magnification map to fits file """
+
+        # define output file
+        path = "" if path==None else path if path[-1]=="/" else path + "/"
+        fout = path + filename
+
+        # set up HDU
+        hdu = fits.PrimaryHDU(self.magarr)
+
+        # add creation info to header
+        now = datetime.date.today().strftime("%B %d, %Y")
+        hdu.header['SIMPLE'] = (True, 'created by MULE via PyFITS on ' + now)
+
+        # add important info to header
+        keys = ['kappa', 'gamma', 'fstar', 'xmin', 'xmax', 'ymin',
+                'ymax', 'nraymag1']
+        vals = [self.kappa, self.gamma, self.fstar, self.xr[0],
+                self.xr[1], self.yr[0], self.yr[1], self.nraymag1]
+        coms = ['local convergence', 'local shear', 
+                'fraction of surface density in stars', 
+                'min source plane x-coord', 'max source plane x-coord', 
+                'min source plane y-coord', 'max source plane y-coord', 
+                '# rays per pixel for unity magnification']
+
+        for i in xrange(len(keys)):
+            hdu.header[keys[i]] = (vals[i], coms[i])
+
+        # write to file
+        hdu.writeto(fout, clobber=True)
+
+        return
+
+
+
     # -------- convolve the magnification map with a source morphology
     def convmap(self, rsrc, stype=None):
 
@@ -314,8 +353,6 @@ class magmap():
             'nximg'     : self.nximg,
             'nyimg'     : self.nyimg,
             'bins'      : self.bins,
-            'seed_pos'  : self.seed_pos,
-            'seed_rein' : self.seed_rein,
             'nraymag1'  : self.nraymag1,
             'stars'     : self.stars,
             'cells'     : self.cells,
