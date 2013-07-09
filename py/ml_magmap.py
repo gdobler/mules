@@ -10,18 +10,39 @@ class magmap():
 
     """
       magmap class includes the following data.
-        ??? : ???
-        ??? : ???
-        ??? : ???
+        lens system params:
+          kappa - local convergence
+          gamma - local shear
+          fstar - fraction of surface mass density in stars
+        source plane params:
+          nxpix  - number of y pixels in the source plane
+          nypix  - number of y pixels in the source plane
+          xr     - [xmin,xmax] of the source plane
+          yr     - [ymin,ymax] of the source plane
+          magarr - magnification as a function of source position
+          magcon - magarr convolved with kernel (source morphology)
+        image plane params:
+          nximg  - number of coarse x pixels in the image plane
+          nyimg  - number of coarse y pixels in the image plane
+          bins   - number of x and y subgrid bins
+          defarr - deflection angle array (nximg*bins,nyimg*bins,2)
+        star params:
+          stars - the star field of type "starfield" class
+          cells - list of tree cells each of type "treecell" class
+        misc params:
+          nraymag1 - number of rays per unity magnification per cell
+        source params:
+          rsrc   - size of the source
+          stype  - source morphology
+          kernel - convolution kernel (source morphology)
     """
 
     # -------- initialize the magnification map parameters
     def __init__(self, kappa, gamma, fstar, nxpix=None, nypix=None,
                  xr=None, yr=None, seed_pos=None, seed_rein=None,
-                 nside=None, nximg=None, nyimg=None, eps=None,
-                 multi=None, bins=None, xsrc=None, ysrc=None,
-                 ixsrc=None, iysrc=None, beta=None, mbar=None,
-                 mrat=None):
+                 nside=None, nximg=None, nyimg=None, multi=None,
+                 bins=None, xsrc=None, ysrc=None, ixsrc=None,
+                 iysrc=None, beta=None, mbar=None, mrat=None):
 
         """ Initialize the magnification map parameters """
 
@@ -33,7 +54,6 @@ class magmap():
         nside     = 16 if nside==None else nside # nside of stellar population
         nximg     = 100 if nximg==None else nximg
         nyimg     = 100 if nyimg==None else nyimg
-        eps       = 0.05 if eps==None else eps # % of deflection of 6th moment
         bins      = 1 if bins==None else bins # subgridding in deflection angle
         seed_pos  = 111 if seed_pos==None else seed_pos
         seed_rein = 222 if seed_rein==None else seed_rein
@@ -149,22 +169,21 @@ class magmap():
 
 
         # -------- set attributes
-        self.names = ['nxpix', 'nypix', 'xr', 'yr', 'nside', 'nximg',
-                      'nyimg', 'bins', 'eps', 'seed_pos',
-                      'seed_rein','nraymag1', 'stars', 'cells', 'defarr',
+        self.names = ['kappa', 'gamma', 'fstar', 'nxpix', 'nypix',
+                      'xr', 'yr', 'nximg', 'nyimg', 'bins',
+                      'nraymag1', 'stars', 'cells', 'defarr',
                       'magarr', 'rsrc', 'stype', 'kernel', 'magcon']
 
+        self.kappa     = kappa
+        self.gamma     = gamma
+        self.fstar     = fstar
         self.nxpix     = nxpix
         self.nypix     = nypix
         self.xr        = xr
         self.yr        = yr
-        self.nside     = nside
         self.nximg     = nximg
         self.nyimg     = nyimg
         self.bins      = bins
-        self.eps       = eps
-        self.seed_pos  = seed_pos
-        self.seed_rein = seed_rein
         self.nraymag1  = nraymag1
         self.stars     = stars
         self.cells     = cells
@@ -292,11 +311,9 @@ class magmap():
             'nypix'     : self.nypix,
             'xr'        : self.xr,
             'yr'        : self.yr,
-            'nside'     : self.nside,
             'nximg'     : self.nximg,
             'nyimg'     : self.nyimg,
             'bins'      : self.bins,
-            'eps'       : self.eps,
             'seed_pos'  : self.seed_pos,
             'seed_rein' : self.seed_rein,
             'nraymag1'  : self.nraymag1,
