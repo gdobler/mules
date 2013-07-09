@@ -4,18 +4,25 @@ def ml_cell_ring2nest(cell_ring, nside=None, quiet=None):
 
     """
     NAME:
+      ml_cell_ring2nest
 
     PURPOSE:
+      convert cartesian ring ordered cell list to nested cell list.
 
     CALLING SEQUENCE:
+      cell_nest = ml_cell_rin2nest(cell_ring, [nside= , quiet = ])
 
     INPUTS:
+      cell_ring - ring ordered cells (i.e., left-> right, top->bottom)
 
     OPTIONAL INPUTS:
+      nside - input nside by hand (e.g., if cell list is incomplete)
 
     KEYWORDS:
+      quiet - no messages output
 
     OUTPUTS:
+      cell_nest - nest ordered cells
 
     OPTIONAL OUTPUTS:
 
@@ -29,7 +36,7 @@ def ml_cell_ring2nest(cell_ring, nside=None, quiet=None):
     ------------------------------------------------------------
     """
 
-# -------- utilities
+    # -------- utilities
     nside = nside if nside else np.sqrt(cell_ring.size).astype(int)
     xring = cell_ring % nside
     yring = cell_ring / nside
@@ -40,7 +47,7 @@ def ml_cell_ring2nest(cell_ring, nside=None, quiet=None):
 
 
 
-# -------- convert ring cell numbers to nested cell numbers and return
+    # -------- convert ring cell numbers to nested cell numbers and return
     nnum = np.log2(nside).astype(int) - 1
     offr = 0 if nnum==0 else  np.cumsum(2.0**(2.0*np.arange(nnum)+1))
     offc = 0 if nnum==0 else -np.cumsum(2.0**(2.0*np.arange(nnum)+2))-2.0-nside
