@@ -23,8 +23,8 @@ class magmap():
                  ixsrc=None, iysrc=None, beta=None, mbar=None,
                  mrat=None):
 
-
         """ Initialize the magnification map parameters """
+
         # --------  defaults
         nxpix     = 300 if nxpix==None else nxpix
         nypix     = 300 if nypix==None else nypix
@@ -179,6 +179,8 @@ class magmap():
 
     # -------- convolve the magnification map with a source morphology
     def convmap(self, rsrc, stype=None):
+
+        """ Convolve the magnification map with a source morphology """
 
         # defaults
         if stype==None: stype='gaussian' # default Gaussian

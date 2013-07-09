@@ -110,18 +110,32 @@ def genstars(kappas, xrange_st, yrange_st, nside, seed_pos, seed_rein,
 
     """
     NAME:
+      genstars
 
     PURPOSE:
+      Generate a population of stars.
 
     CALLING SEQUENCE:
+      stars = genstars(kappas, xrange_st, yrange_st, nside, seed_pos, 
+                       seed_rein, [beta=, mbar=, mrat=])
 
     INPUTS:
+      kappas    - surface density in stars
+      xrange_st - the size of the stellar field in the x direction
+      yrange_st - the size of the stellar field in the y direction
+      nside     - number of cells per side
+      seed_pos  - seed for the positions of the stars
+      seed_rein - seed for the einstein radii of the stars
 
     OPTIONAL INPUTS:
+      beta - power law in the stellar mass function (default 0.0)
+      mbar - mean mass of the stars (default 1.0)
+      mrat - ratio of lowest to highest mass in mass function (default 1.0)
 
     KEYWORDS:
 
     OUTPUTS:
+      stars - star field of type "starfield" class"
 
     OPTIONAL OUTPUTS:
 
@@ -177,12 +191,12 @@ def genstars(kappas, xrange_st, yrange_st, nside, seed_pos, seed_rein,
 
 
     # -------- sort according to cell number
-    ord = np.argsort(icell)
+    srt = np.argsort(icell)
 
-    xstar = xstar[ord]
-    ystar = ystar[ord]
-    rein  = rein[ord]
-    icell = icell[ord]
+    xstar = xstar[srt]
+    ystar = ystar[srt]
+    rein  = rein[srt]
+    icell = icell[srt]
 
 
 

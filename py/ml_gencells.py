@@ -4,13 +4,17 @@ from ml_cellpos import *
 class treecell():
     """
       treecell class includes the following data.
-        ??? : ???
-        ??? : ???
-        ??? : ???
+        label/position parameters : icell, xcell, ycell
+        star parameters : nstar, mcell
+        size/level parameters : xside, yside, high, stind
+        multipole parameters : cmom, smom
     """
 
+    # -------- initialize parameters
     def __init__(self, icell, nstar, xcell, ycell, mcell, xside,
                  yside, cmom, smom, high, stind):
+
+        """ Initialize parameters """
 
         self.dtype = 'treecell'
         self.names =['icell', 'nstar', 'xcell', 'ycell', 'mcell',
@@ -30,7 +34,7 @@ class treecell():
         self.stind = stind
 
 
-# -------- return an item by its name
+    # -------- return an item by its name
     def __getitem__(self, key):
 
         """ Return an item by its name. """
@@ -55,7 +59,42 @@ class treecell():
 
 def gencells(stars):
 
-# -------- utilities
+    """
+    NAME:
+      gencells
+
+    PURPOSE:
+      Generate a list of cells (each of type "treecell") which each contain
+      20th order multipole moments of the stars within the cell.  These 
+      multipole moments are to be combined with image plane positions 
+      to calculate deflection angles due to each cell.
+
+    CALLING SEQUENCE:
+      cells = gencells(stars)
+
+    INPUTS:
+      stars - the stellar field (of type "starfield" class)
+
+    OPTIONAL INPUTS:
+
+    KEYWORDS:
+
+    OUTPUTS:
+      cells - a list of tree cells (each of type "treecell" class)
+
+    OPTIONAL OUTPUTS:
+
+    EXAMPLES:
+
+    COMMENTS:
+
+    REVISION HISTORY:
+      2013/03/26 - Written by Greg Dobler (KITP/UCSB)
+
+    ------------------------------------------------------------
+    """
+
+    # -------- utilities
     xstar = stars.xstar
     ystar = stars.ystar
     rein  = stars.rein
@@ -69,13 +108,13 @@ def gencells(stars):
 
 
 
-# -------- find the maximum number of stars in a cell
+    # -------- find the maximum number of stars in a cell
     sicell = stars.icell
     maxst  = (np.histogram(sicell,bins=range(sicell.max())))[0].max()
 
 
 
-# --------  loop through the cells and claulate the multipole moments
+    # --------  loop through the cells and claulate the multipole moments
     for ilev in range(nlev):
         print("ML_GENCELLS: Building level {0} of {1}".format(ilev,nlev-1))
 
@@ -140,5 +179,5 @@ def gencells(stars):
 
 
 
-# --------  return cells list
+    # --------  return cells list
     return cells
