@@ -40,23 +40,18 @@ class magmap():
     """
 
     # -------- initialize the magnification map parameters
-    def __init__(self, kappa, gamma, fstar, nxpix=None, nypix=None,
+    def __init__(self, kappa, gamma, fstar, nxpix=1024, nypix=1024,
                  xr=None, yr=None, seed_pos=None, seed_rein=None,
-                 nside=None, nximg=None, nyimg=None, multi=None,
-                 bins=None, xsrc=None, ysrc=None, ixsrc=None,
+                 nside=None, nximg=512, nyimg=512, multi=None,
+                 bins=15, xsrc=None, ysrc=None, ixsrc=None,
                  iysrc=None, beta=None, mbar=None, mrat=None):
 
         """ Initialize the magnification map parameters """
 
         # --------  defaults
-        nxpix     = 300 if nxpix==None else nxpix
-        nypix     = 300 if nypix==None else nypix
         xr        = [-15., 15.] if xr==None else xr # in stellar Rein
         yr        = [-15., 15.] if yr==None else yr # in stellar Rein
         nside     = 16 if nside==None else nside # nside of stellar population
-        nximg     = 100 if nximg==None else nximg
-        nyimg     = 100 if nyimg==None else nyimg
-        bins      = 1 if bins==None else bins # subgridding in deflection angle
         seed_pos  = 111 if seed_pos==None else seed_pos
         seed_rein = 222 if seed_rein==None else seed_rein
         beta      = 0.0 if beta==None else beta
@@ -337,6 +332,15 @@ class magmap():
         mapint = interpolate.interp2d(x,y,mmap,kind='cubic')
 
         return np.array([mapint(i,j)[0] for i,j in zip(*[iy,ix])])
+
+
+
+    # -------- create a visualization of the map and light curve
+    def view(self, fnum=None, **kwargs):
+
+        """ Plot visualization of the magnification map and lightcurve. """
+
+
 
 
 
