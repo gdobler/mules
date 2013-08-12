@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from scipy import interpolate
-from ml_defang_iter import *
+from __future__ import print_function
+
 import sys
 import multiprocessing
-from ml_counters import *
+from scipy import interpolate
+from .ml_defang_iter import *
+from .ml_counters import *
 
 def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, bins=1):
 
@@ -81,8 +83,8 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, bins=1):
 
         for i in range(nx):
             if verbose and ((i+1) % 5 == 0):
-                print(('ML_DEFARR:     iximg = {0} out ' + 
-                       'of {1}\r').format(i+1, nx)), 
+                print('ML_DEFARR:     iximg = {0} out ' 
+                       'of {1}'.format(i+1, nx), end='\r')
                 sys.stdout.flush()
 
             for j in range(ny):
@@ -123,7 +125,7 @@ def ml_defarr(xr, yr, nx, ny, cells, stars, multi=None, bins=1):
             childs.append(ctemp)
             ps.append(multiprocessing.Process(target=run_rect,
                                               args=(childs[ip],xr,yrs[ip],
-                                                    nx,ny/nproc,cells,stars),
+                                                    nx,ny//nproc,cells,stars),
                                               kwargs={'verbose':ip==0}))
             ps[ip].start()
 
