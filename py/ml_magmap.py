@@ -3,10 +3,10 @@ import datetime
 import numpy as np
 from scipy import ndimage, interpolate
 import pyfits as fits
-from ml_gencells import *
-from ml_genstars import *
-from ml_counters import *
-from ml_defarr import *
+from .ml_gencells import *
+from .ml_genstars import *
+from .ml_counters import *
+from .ml_defarr import *
 
 class magmap():
 
@@ -44,7 +44,8 @@ class magmap():
                  xr=None, yr=None, seed_pos=None, seed_rein=None,
                  nside=None, nximg=512, nyimg=512, multi=None,
                  bins=15, xsrc=None, ysrc=None, ixsrc=None,
-                 iysrc=None, beta=None, mbar=None, mrat=None):
+                 iysrc=None, beta=None, mbar=None, mrat=None,
+                 test=None):
 
         """ Initialize the magnification map parameters """
 
@@ -57,6 +58,21 @@ class magmap():
         beta      = 0.0 if beta==None else beta
         mbar      = 1.0 if mbar==None else mbar
         mrat      = 1.0 if mrat==None else mrat
+
+        if test!=None:
+            nxpix     = 300
+            nypix     = 300
+            xr        = [-15., 15.]
+            yr        = [-15., 15.]
+            nside     = 16
+            nximg     = 100
+            nyimg     = 100
+            bins      = 1
+            seed_pos  = 111
+            seed_rein = 222
+            beta      = 0.0
+            mbar      = 1.0
+            mrat      = 1.0
 
 
         # -------- make sure source plane is a square
@@ -220,7 +236,7 @@ class magmap():
                 'min source plane y-coord', 'max source plane y-coord', 
                 '# rays per pixel for unity magnification']
 
-        for i in xrange(len(keys)):
+        for i in range(len(keys)):
             hdu.header[keys[i]] = (vals[i], coms[i])
 
         # write to file
