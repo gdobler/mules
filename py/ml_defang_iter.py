@@ -1,5 +1,5 @@
 import numpy as np
-from ml_counters import *
+from .ml_counters import *
 
 def ml_defang_iter(ximg, yimg, cells, stars):
 
@@ -86,7 +86,7 @@ def ml_defang_iter(ximg, yimg, cells, stars):
         axvec        = delxi*mi2ori2
         ayvec        = delyi*mi2ori2
 
-        for i in xrange(stsz):
+        for i in range(stsz):
             alphax += axvec[i]
             alphay += ayvec[i]
 
@@ -148,7 +148,7 @@ def ml_defang_iter(ximg, yimg, cells, stars):
         talphar   = alphar0
         talphat   = 0.0
 
-        for i in xrange(20):
+        for i in range(20):
             talphar += alphar[i]
             talphat += alphat[i]
 
