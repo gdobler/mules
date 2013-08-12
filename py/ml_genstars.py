@@ -1,5 +1,5 @@
 import numpy as np
-from ml_cell_ring2nest import *
+from .ml_cell_ring2nest import *
 
 class starfield():
 

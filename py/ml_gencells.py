@@ -1,5 +1,5 @@
 import numpy as np
-from ml_cellpos import *
+from .ml_cellpos import *
 
 class treecell():
     """
