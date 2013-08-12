@@ -38,8 +38,8 @@ def ml_cell_ring2nest(cell_ring, nside=None, quiet=None):
 
     # -------- utilities
     nside = nside if nside else np.sqrt(cell_ring.size).astype(int)
-    xring = cell_ring % nside
-    yring = cell_ring / nside
+    xring = (cell_ring % nside).astype(int)
+    yring = (cell_ring / nside).astype(int)
 
     if quiet==None:
         print("ML_CELL_RING2NEST: converting cells with nside = {0}"
@@ -59,11 +59,11 @@ def ml_cell_ring2nest(cell_ring, nside=None, quiet=None):
     for ioff in range(nnum):
         tind = 2**(ioff+2)*np.arange(nside/(2**(ioff+2))) + 2**(ioff+1)
 
-        row[tind] = offr[ioff]
-        col[tind] = offc[ioff]
+        row[tind.astype(int)] = offr[ioff]
+        col[tind.astype(int)] = offc[ioff]
 
     arow      = np.cumsum(row).astype(int)
     acol      = np.cumsum(col).astype(int)
-    cell_nest = cell_ring + acol[yring] + arow[xring] + nside*nside - 2L
+    cell_nest = cell_ring + acol[yring] + arow[xring] + nside*nside - 2
 
     return cell_nest
